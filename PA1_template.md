@@ -11,13 +11,7 @@ keep_md: true
 
 This R Markdown document describes each of the steps required to complete the Reproducible Research JHU-Coursera, Course Project 1.
 
-```{r include = FALSE}
-## Loading dependencies
-## This code chunk will not be displayed on the R Markdown document
-library(dplyr)
-library(lubridate)
-library(ggplot2)
-```
+
 
 
 ## Loading and preprocessing the data
@@ -26,7 +20,8 @@ The following code:
 
 0. Validates if source data file has been unzipped. In case it hasn't, it unzips it.
 
-```{r echo = TRUE}
+
+```r
 zippedfilename <- 'activity.zip'
 unzippedfilename <- 'activity.csv'
 if (!file.exists(unzippedfilename)) {
@@ -36,13 +31,15 @@ if (!file.exists(unzippedfilename)) {
 
 1. Loads the data into R.
 
-```{r echo = TRUE}
+
+```r
 activity <- read.csv(unzippedfilename, header = TRUE, na.strings = c('NA'))
 ```
 
 2. Processes data set for further analyses.
 
-```{r echo = TRUE}
+
+```r
 activity <- tibble::as_tibble(activity)
 activity$date <- ymd(activity$date)
 ```
@@ -55,14 +52,16 @@ In this section of the document, the code will perform the following steps:
 
 1. Calculates the total number of steps, while ignoring missing values.
 
-```{r echo = TRUE}
+
+```r
 total_steps_day <- activity %>% select(-c(interval)) %>%
         group_by(date) %>% summarise_all(sum, na.rm = TRUE)
 ```
 
 2. Creates a histogram of the total number of steps per day.
 
-```{r echo = TRUE}
+
+```r
 print({
         g <- ggplot(total_steps_day, aes(x = steps))
         g + geom_histogram(binwidth = 2000, fill = 'red', color= 'black') +
@@ -73,11 +72,19 @@ print({
 })
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
 3. Calculates and reports the mean and median of the total number of steps per day.
 
-```{r echo = TRUE}
+
+```r
 summary_total_steps_day <- summary(total_steps_day$steps)
 print(summary_total_steps_day[c('Mean', 'Median')])
+```
+
+```
+##     Mean   Median 
+##  9354.23 10395.00
 ```
 
 
@@ -88,7 +95,8 @@ In this section of the document, the code will perform the following steps:
 
 1. Creates a time series of the average number of steps across all days.
 
-```{r echo = TRUE}
+
+```r
 total_steps_interval <- activity %>% select(-c(date)) %>%
         group_by(interval) %>% summarise_all(mean, na.rm = TRUE)
 print({
@@ -101,11 +109,21 @@ print({
 })
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
 2. Determines which 5-min interval, on average across all days, contains the maximum number of steps.
 
-```{r echo = TRUE}
+
+```r
 max_interval <- total_steps_interval[total_steps_interval$steps == max(total_steps_interval$steps), ]
 print(max_interval)
+```
+
+```
+## # A tibble: 1 x 2
+##   interval steps
+##      <int> <dbl>
+## 1      835  206.
 ```
 
 
@@ -116,14 +134,20 @@ In this section of the document, the code will perform the following steps:
 
 1. Calculates the total number of rows with missing values in the data set.
 
-```{r echo = TRUE}
+
+```r
 missing_values <- activity[is.na(activity$steps) | is.na(activity$date) | is.na(activity$interval), ]
 dim(missing_values)[1]
 ```
 
+```
+## [1] 2304
+```
+
 2. Designs a strategy to replace missing values (the minimum value between the day mean, day median, interval mean, and interval median).
 
-```{r echo = TRUE}
+
+```r
 ## Calculating reference values
 mean_values_day <- activity %>% select(-c(interval)) %>%
         group_by(date) %>% summarise_all(mean, na.rm = TRUE)
@@ -137,7 +161,8 @@ median_values_interval <- activity %>% select(-c(date)) %>%
 
 3. Creates a new data set replacing missing values from the original.
 
-```{r echo = TRUE}
+
+```r
 ## Replacing values
 new_activity <- activity
 for (i in 1:nrow(activity)) {
@@ -157,7 +182,8 @@ for (i in 1:nrow(activity)) {
 
 4. Creates a histogram of the total number of steps, and calculates mean and median.
 
-```{r echo = TRUE}
+
+```r
 new_total_steps_day <- new_activity %>% select(-c(interval)) %>%
         group_by(date) %>% summarise_all(sum, na.rm = TRUE)
 print({
@@ -168,8 +194,18 @@ print({
                 xlab('Number of steps per day') +
                 ylab('Number of days')
 })
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
+```r
 new_summary_total_steps_day <- summary(new_total_steps_day$steps)
 print(new_summary_total_steps_day[c('Mean', 'Median')])
+```
+
+```
+##      Mean    Median 
+##  9503.869 10395.000
 ```
 
 NOTE: It is important to mention that the histogram changes only slightly, particularly on the first and second 2000 step buckets. Also, the mean value was barely increased, while the median remained the same.
@@ -182,7 +218,8 @@ In this section of the document, the code will perform the following steps:
 
 1. Creates new weekday factor variable using weekdays function.
 
-```{r echo = TRUE}
+
+```r
 new_activity <- new_activity  %>% mutate(weekday = weekdays(date))
 new_activity$weekday[new_activity$weekday == 'Sunday'] <- 'weekend'
 new_activity$weekday[new_activity$weekday == 'Saturday'] <- 'weekend'
@@ -191,9 +228,18 @@ new_activity <- new_activity  %>% mutate(weekday = as.factor(weekday))
 str(new_activity)
 ```
 
+```
+## tibble [17,568 x 4] (S3: tbl_df/tbl/data.frame)
+##  $ steps   : num [1:17568] 0 0 0 0 0 0 0 0 0 0 ...
+##  $ date    : Date[1:17568], format: "2012-10-01" "2012-10-01" ...
+##  $ interval: int [1:17568] 0 5 10 15 20 25 30 35 40 45 ...
+##  $ weekday : Factor w/ 2 levels "weekday","weekend": 1 1 1 1 1 1 1 1 1 1 ...
+```
+
 2. Creates a time series of the 5 min interval and average number of steps per weekday factor variable value.
 
-```{r echo = TRUE}
+
+```r
 new_total_steps_interval <- new_activity %>% select(-c(date)) %>%
         group_by(interval, weekday) %>% summarise_all(mean, na.rm = TRUE)
 print({
@@ -206,3 +252,5 @@ print({
                 ylab('Average number of steps')
 })
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
